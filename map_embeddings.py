@@ -61,6 +61,7 @@ def main():
     parser.add_argument('--encoding', default='utf-8', help='the character encoding for input/output (defaults to utf-8)')
     parser.add_argument('--precision', choices=['fp16', 'fp32', 'fp64'], default='fp32', help='the floating-point precision (defaults to fp32)')
     parser.add_argument('--cuda', action='store_true', help='use cuda (requires cupy)')
+    parser.add_argument('--gpus', default=1, help='number of gpus')
     parser.add_argument('--batch_size', default=10000, type=int, help='batch size (defaults to 10000); does not affect results, larger is usually faster but uses more memory')
     parser.add_argument('--seed', type=int, default=0, help='the random seed (defaults to 0)')
 
@@ -173,9 +174,17 @@ def main():
     if args.init_unsupervised:
         sim_size = min(x.shape[0], z.shape[0]) if args.unsupervised_vocab <= 0 else min(x.shape[0], z.shape[0], args.unsupervised_vocab)
         u, s, vt = xp.linalg.svd(x[:sim_size], full_matrices=False)
-        xsim = (u*s).dot(u.T)
+        if args.gpus > 1:
+            with cupy.cuda.Device(0):
+                xsim = (u*s).dot(u.T)
+        else:
+            xsim = (u*s).dot(u.T)
         u, s, vt = xp.linalg.svd(z[:sim_size], full_matrices=False)
-        zsim = (u*s).dot(u.T)
+        if args.gpus > 1:
+            with cupy.cuda.Device(1):
+                zsim = (u*s).dot(u.T)
+        else:
+            zsim = (u*s).dot(u.T)
         del u, s, vt
         xsim.sort(axis=1)
         zsim.sort(axis=1)
