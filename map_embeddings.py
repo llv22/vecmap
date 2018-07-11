@@ -173,8 +173,16 @@ def main():
     trg_word2ind = {word: i for i, word in enumerate(trg_words)}
 
     # STEP 0: Normalization
-    embeddings.normalize(x, args.normalize)
-    embeddings.normalize(z, args.normalize)
+    if args.gpus > 1:
+        with cupy.cuda.Device(0):
+            embeddings.normalize(x, args.normalize)
+    else:
+        embeddings.normalize(x, args.normalize)
+    if args.gpus > 1:
+        with cupy.cuda.Device(1):
+            embeddings.normalize(z, args.normalize)
+    else:
+        embeddings.normalize(z, args.normalize)
 
     # Build the seed dictionary
     src_indices = []
