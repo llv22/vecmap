@@ -179,6 +179,7 @@ def main():
                 xsim = (u*s).dot(u.T)
         else:
             xsim = (u*s).dot(u.T)
+        del u, s, vt
         u, s, vt = xp.linalg.svd(z[:sim_size], full_matrices=False)
         if args.gpus > 1:
             with cupy.cuda.Device(1):
