@@ -154,8 +154,16 @@ def main():
             print('ERROR: Install CuPy for CUDA support', file=sys.stderr)
             sys.exit(-1)
         xp = get_cupy()
-        x = xp.asarray(x)
-        z = xp.asarray(z)
+        if args.gpus > 1:
+            with cupy.cuda.Device(0):
+                x = xp.asarray(x)
+        else:
+            x = xp.asarray(x)
+        if args.gpus > 1:
+            with cupy.cuda.Device(1):
+                z = xp.asarray(z)
+        else:
+            z = xp.asarray(z)
     else:
         xp = np
     xp.random.seed(args.seed)
