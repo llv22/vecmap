@@ -175,9 +175,10 @@ def main():
         u, s, vt = xp.linalg.svd(x[:sim_size], full_matrices=False)
         xsim = (u*s).dot(u.T)
         del u, s, vt
-        # try to copy to gpu1
         with cupy.cuda.Device(1):
-            u, s, vt = xp.linalg.svd(z[:sim_size], full_matrices=False)
+            # move z[:sim_size] to gpu(1)
+            zsim_gpu_1 = cupy.asarray(z[:sim_size])
+            u, s, vt = xp.linalg.svd(zsim_gpu_1, full_matrices=False)
             zsim = (u*s).dot(u.T)
         del u, s, vt
         xsim.sort(axis=1)
