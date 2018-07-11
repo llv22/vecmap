@@ -61,7 +61,7 @@ def main():
     parser.add_argument('--encoding', default='utf-8', help='the character encoding for input/output (defaults to utf-8)')
     parser.add_argument('--precision', choices=['fp16', 'fp32', 'fp64'], default='fp32', help='the floating-point precision (defaults to fp32)')
     parser.add_argument('--cuda', action='store_true', help='use cuda (requires cupy)')
-    parser.add_argument('--gpus', default=1, help='number of gpus')
+    parser.add_argument('--gpus', type=int, default=1, help='number of gpus')
     parser.add_argument('--batch_size', default=10000, type=int, help='batch size (defaults to 10000); does not affect results, larger is usually faster but uses more memory')
     parser.add_argument('--seed', type=int, default=0, help='the random seed (defaults to 0)')
 
