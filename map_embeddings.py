@@ -181,7 +181,9 @@ def main():
             u, s, vt = xp.linalg.svd(zsim_gpu_1, full_matrices=False)
             zsim = (u*s).dot(u.T)
         del u, s, vt
-        xsim.sort(axis=1)
+        with cupy.cuda.Device(1):
+            xsim = cp.asarray(xsim)
+            xsim.sort(axis=1)
         zsim.sort(axis=1)
         embeddings.normalize(xsim, args.normalize)
         embeddings.normalize(zsim, args.normalize)
