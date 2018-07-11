@@ -61,7 +61,6 @@ def main():
     parser.add_argument('--encoding', default='utf-8', help='the character encoding for input/output (defaults to utf-8)')
     parser.add_argument('--precision', choices=['fp16', 'fp32', 'fp64'], default='fp32', help='the floating-point precision (defaults to fp32)')
     parser.add_argument('--cuda', action='store_true', help='use cuda (requires cupy)')
-    parser.add_argument('--gpus', type=int, default=1, help='number of gpus')
     parser.add_argument('--batch_size', default=10000, type=int, help='batch size (defaults to 10000); does not affect results, larger is usually faster but uses more memory')
     parser.add_argument('--seed', type=int, default=0, help='the random seed (defaults to 0)')
 
@@ -154,16 +153,8 @@ def main():
             print('ERROR: Install CuPy for CUDA support', file=sys.stderr)
             sys.exit(-1)
         xp = get_cupy()
-        if args.gpus > 1:
-            with cupy.cuda.Device(0):
-                x = xp.asarray(x)
-        else:
-            x = xp.asarray(x)
-        if args.gpus > 1:
-            with cupy.cuda.Device(1):
-                z = xp.asarray(z)
-        else:
-            z = xp.asarray(z)
+        x = xp.asarray(x)
+        z = xp.asarray(z)
     else:
         xp = np
     xp.random.seed(args.seed)
@@ -173,39 +164,18 @@ def main():
     trg_word2ind = {word: i for i, word in enumerate(trg_words)}
 
     # STEP 0: Normalization
-    if args.gpus > 1:
-        with cupy.cuda.Device(0):
-            embeddings.normalize(x, args.normalize)
-    else:
-        embeddings.normalize(x, args.normalize)
-    if args.gpus > 1:
-        with cupy.cuda.Device(1):
-            embeddings.normalize(z, args.normalize)
-    else:
-        embeddings.normalize(z, args.normalize)
+    embeddings.normalize(x, args.normalize)
+    embeddings.normalize(z, args.normalize)
 
     # Build the seed dictionary
     src_indices = []
     trg_indices = []
     if args.init_unsupervised:
         sim_size = min(x.shape[0], z.shape[0]) if args.unsupervised_vocab <= 0 else min(x.shape[0], z.shape[0], args.unsupervised_vocab)
-        if args.gpus > 1:
-            with cupy.cuda.Device(0):
-                # must put into the same device 0 for u, s, vt
-                u, s, vt = xp.linalg.svd(x[:sim_size], full_matrices=False)
-                xsim = (u*s).dot(u.T)
-        else:
-            u, s, vt = xp.linalg.svd(x[:sim_size], full_matrices=False)
-            xsim = (u*s).dot(u.T)
-        del u, s, vt
-        if args.gpus > 1:
-            with cupy.cuda.Device(1):
-                # must put into the same device 1 for u, s, vt
-                u, s, vt = xp.linalg.svd(z[:sim_size], full_matrices=False)
-                zsim = (u*s).dot(u.T)
-        else:
-            u, s, vt = xp.linalg.svd(z[:sim_size], full_matrices=False)
-            zsim = (u*s).dot(u.T)
+        u, s, vt = xp.linalg.svd(x[:sim_size], full_matrices=False)
+        xsim = (u*s).dot(u.T)
+        u, s, vt = xp.linalg.svd(z[:sim_size], full_matrices=False)
+        zsim = (u*s).dot(u.T)
         del u, s, vt
         xsim.sort(axis=1)
         zsim.sort(axis=1)
