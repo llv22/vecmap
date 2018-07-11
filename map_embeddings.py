@@ -174,6 +174,7 @@ def main():
         sim_size = min(x.shape[0], z.shape[0]) if args.unsupervised_vocab <= 0 else min(x.shape[0], z.shape[0], args.unsupervised_vocab)
         u, s, vt = xp.linalg.svd(x[:sim_size], full_matrices=False)
         xsim = (u*s).dot(u.T)
+        del u, s, vt
         u, s, vt = xp.linalg.svd(z[:sim_size], full_matrices=False)
         zsim = (u*s).dot(u.T)
         del u, s, vt
