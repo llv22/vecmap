@@ -173,18 +173,22 @@ def main():
     trg_indices = []
     if args.init_unsupervised:
         sim_size = min(x.shape[0], z.shape[0]) if args.unsupervised_vocab <= 0 else min(x.shape[0], z.shape[0], args.unsupervised_vocab)
-        u, s, vt = xp.linalg.svd(x[:sim_size], full_matrices=False)
         if args.gpus > 1:
             with cupy.cuda.Device(0):
+                # must put into the same device 0 for u, s, vt
+                u, s, vt = xp.linalg.svd(x[:sim_size], full_matrices=False)
                 xsim = (u*s).dot(u.T)
         else:
+            u, s, vt = xp.linalg.svd(x[:sim_size], full_matrices=False)
             xsim = (u*s).dot(u.T)
         del u, s, vt
-        u, s, vt = xp.linalg.svd(z[:sim_size], full_matrices=False)
         if args.gpus > 1:
             with cupy.cuda.Device(1):
+                # must put into the same device 1 for u, s, vt
+                u, s, vt = xp.linalg.svd(z[:sim_size], full_matrices=False)
                 zsim = (u*s).dot(u.T)
         else:
+            u, s, vt = xp.linalg.svd(z[:sim_size], full_matrices=False)
             zsim = (u*s).dot(u.T)
         del u, s, vt
         xsim.sort(axis=1)
