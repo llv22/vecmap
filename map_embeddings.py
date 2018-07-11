@@ -178,6 +178,8 @@ def main():
         u, s, vt = xp.linalg.svd(z[:sim_size], full_matrices=False)
         zsim = (u*s).dot(u.T)
         del u, s, vt
+        # try to copy to gpu1
+        xsim = cupy.cuda.to_gpu(xsim, device=1)
         xsim.sort(axis=1)
         zsim.sort(axis=1)
         embeddings.normalize(xsim, args.normalize)
